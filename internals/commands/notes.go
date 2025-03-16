@@ -2,6 +2,8 @@ package commands
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io/fs"
 	"os"
@@ -16,6 +18,22 @@ type Note struct {
 	Path    string
 	Name    string
 	ModTime int64
+	Sha     string
+}
+
+func NewNote(path string, name string, modTime int64) Note {
+	content := fmt.Sprintf("%s%d", path, modTime)
+	hasher := sha256.New()
+	hasher.Write([]byte(content))
+	sha := hex.EncodeToString(hasher.Sum(nil))
+
+	return Note{
+		Path:    path,
+		Name:    name,
+		ModTime: modTime,
+		Sha:     sha,
+	}
+
 }
 
 type NotesRegistered map[string]Note
@@ -44,11 +62,7 @@ func RegisterNotes(dir string, allowedExtensions []string) tea.Cmd {
 			if !slices.Contains(allowedExtensions, filepath.Ext(info.Name())) {
 				return nil
 			}
-			note := Note{
-				Path:    path,
-				Name:    info.Name(),
-				ModTime: info.ModTime().UnixMilli(),
-			}
+			note := NewNote(path, info.Name(), info.ModTime().UnixMilli())
 			notes[path] = note
 			return nil
 		})
@@ -138,10 +152,6 @@ func getNoteInfo(path string) (Note, error) {
 	if err != nil {
 		return Note{}, fmt.Errorf("failed to get file info: %w", err)
 	}
-	note := Note{
-		Path:    path,
-		Name:    info.Name(),
-		ModTime: info.ModTime().UnixMilli(),
-	}
+	note := NewNote(path, info.Name(), info.ModTime().UnixMilli())
 	return note, nil
 }
