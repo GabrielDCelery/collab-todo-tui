@@ -18,12 +18,18 @@ type Subscriptions struct {
 	noteRemovedChan chan commands.NoteRemoved
 }
 
+type Display struct {
+	width  int
+	height int
+}
+
 type Model struct {
-	ctx    context.Context
-	err    error
-	config ModelConfig
-	notes  map[string]commands.Note
-	subs   Subscriptions
+	ctx     context.Context
+	err     error
+	config  ModelConfig
+	display Display
+	notes   map[string]commands.Note
+	subs    Subscriptions
 }
 
 func NewModel(ctx context.Context, dir string, allowedExtensions []string) Model {
@@ -34,11 +40,15 @@ func NewModel(ctx context.Context, dir string, allowedExtensions []string) Model
 			dir:               dir,
 			allowedExtensions: allowedExtensions,
 		},
-		notes: map[string]commands.Note{},
+		display: Display{
+			width:  0,
+			height: 0,
+		},
 		subs: Subscriptions{
 			noteCreatedChan: make(chan commands.NoteCreated),
 			noteRemovedChan: make(chan commands.NoteRemoved),
 		},
+		notes: map[string]commands.Note{},
 	}
 }
 
